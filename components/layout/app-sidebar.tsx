@@ -60,8 +60,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile } = useUser()
 
   return (
-    <Sidebar {...props}>
-      <SidebarHeader className="border-b border-border/50 p-4">
+    <Sidebar {...props} className="">
+      <SidebarHeader className="border-b bg-background border-border/50 p-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-yasuke-crimson to-yasuke-gold rounded-lg flex items-center justify-center">
             <Sword className="w-6 h-6 text-white" />
@@ -73,16 +73,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         {profile && (
-          <div className="mt-4 p-3 bg-card/50 rounded-lg border border-border/50">
+          <div className="mt-4 p-2 sm:p-3 bg-card/50 rounded-lg border border-border/50">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Level {profile.level}</span>
+              <span className="text-xs sm:text-sm font-medium">Level {profile.level}</span>
               <Badge variant="outline" className="text-xs">
                 {profile.subscription_tier}
               </Badge>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-1.5 sm:h-2">
               <div
-                className="bg-gradient-to-r from-yasuke-crimson to-yasuke-gold h-2 rounded-full transition-all"
+                className="bg-gradient-to-r from-yasuke-crimson to-yasuke-gold h-1.5 sm:h-2 rounded-full transition-all"
                 style={{ width: `${(profile.xp % 1000) / 10}%` }}
               />
             </div>
@@ -91,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-background">
         <ScrollArea className="flex-1">
           {navigationItems.map((section) => (
             <SidebarGroup key={section.title}>
@@ -100,10 +100,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu>
                   {section.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.url} className="w-full">
-                        <button onClick={() => router.push(item.url)} className="flex items-center space-x-3 w-full">
+                      <SidebarMenuButton asChild isActive={pathname === item.url} className="w-full py-2 sm:py-3">
+                        <button
+                          onClick={() => router.push(item.url)}
+                          className="flex items-center space-x-2 sm:space-x-3 w-full"
+                        >
                           <item.icon className="w-4 h-4" />
-                          <span>{item.title}</span>
+                          <span className="text-sm sm:text-base">{item.title}</span>
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -115,7 +118,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/50 p-4">
+      <SidebarFooter className="border-t bg-background border-border/50 p-4">
         <Button className="w-full yasuke-gradient hover:opacity-90" onClick={() => router.push("/paths/new")}>
           <Plus className="w-4 h-4 mr-2" />
           New Path

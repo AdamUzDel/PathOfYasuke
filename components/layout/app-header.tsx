@@ -1,23 +1,21 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { NotificationCenter } from "@/components/notifications/notification-center"
+import { XPDisplay } from "@/components/ui/xp-display"
+import { useUser } from "@/components/providers/user-provider"
+import { User, LogOut } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useUser } from "@/components/providers/user-provider"
-import { useRouter } from "next/navigation"
-import { Sword, Flame, Settings, LogOut, User, Bell, Menu } from 'lucide-react'
-import Link from "next/link"
-import { NotificationCenter } from "@/components/notifications/notification-center"
-import { XPDisplay } from "@/components/ui/xp-display"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface AppHeaderProps {
   title?: string
@@ -26,94 +24,110 @@ interface AppHeaderProps {
   showMenuButton?: boolean
 }
 
-export function AppHeader({
-  title = "Path of Yasuke",
-  subtitle = "Dashboard",
-  onMenuClick,
-  showMenuButton = false,
-}: AppHeaderProps) {
-  const { user, profile, signOut } = useUser()
+export function AppHeader({ title, subtitle, onMenuClick, showMenuButton = true }: AppHeaderProps) {
+  const { user, profile } = useUser()
   const router = useRouter()
-  const [notifications] = useState(0) // TODO: Implement notifications
+  const supabase = createClient()
 
   const handleSignOut = async () => {
-    await signOut()
+    await supabase.auth.signOut()
     router.push("/")
   }
 
-  if (!user || !profile) return null
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   return (
-    <header className="border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/80 backdrop-blur-sm">
+      <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
+        {/* Left side - Menu trigger and title */}
+        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
           {showMenuButton && (
-            <Button variant="ghost" size="sm" onClick={onMenuClick} className="md:hidden">
-              <Menu className="w-5 h-5" />
-            </Button>
+            <div className="md:hidden">
+              <SidebarTrigger />
+            </div>
           )}
 
-          <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-yasuke-crimson to-yasuke-gold rounded-lg flex items-center justify-center">
-              <Sword className="w-5 h-5 text-white" />
+          {(title || subtitle) && (
+            <div className="hidden sm:block min-w-0 flex-1">
+              {title && <h1 className="text-lg font-semibold truncate">{title}</h1>}
+              {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
             </div>
-            <div>
-              <h1 className="text-xl font-bold yasuke-text-gradient">{title}</h1>
-              <p className="text-sm text-muted-foreground hidden sm:block">{subtitle}</p>
-            </div>
-          </Link>
+          )}
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Streak Badge */}
-          <XPDisplay className="hidden sm:block" />
+        {/* Center - XP Display (hidden on small screens) */}
+        <div className="hidden lg:flex items-center justify-center flex-1">
+          {profile && <XPDisplay xp={profile.xp} level={profile.level} />}
+        </div>
 
-          {/* Replace the existing notifications Button with: */}
+        {/* Right side - Notifications and user menu */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* XP Display for mobile/tablet */}
+          <div className="lg:hidden">
+            {profile && (
+              <div className="flex items-center space-x-2 text-xs sm:text-sm">
+                <span className="font-medium">Lv.{profile.level}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-yasuke-gold font-medium">{profile.xp} XP</span>
+              </div>
+            )}
+          </div>
+
           <NotificationCenter />
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile.avatar_url || "/placeholder.svg"} alt={profile.full_name} />
-                  <AvatarFallback>{profile.full_name.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{profile.full_name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{profile.email}</p>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      Level {profile.level}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs text-yasuke-gold border-yasuke-gold/50">
-                      {profile.xp} XP
-                    </Badge>
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url || ""} alt={user.name || ""} />
+                    <AvatarFallback className="yasuke-gradient text-white text-xs">
+                      {user.name ? getUserInitials(user.name) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{user.name || "User"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
+
+      {/* Mobile title display */}
+      {(title || subtitle) && (
+        <div className="sm:hidden px-4 pb-3 border-b border-border/30">
+          {title && <h1 className="text-base font-semibold truncate">{title}</h1>}
+          {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
+        </div>
+      )}
     </header>
   )
 }
