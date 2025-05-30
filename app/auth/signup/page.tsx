@@ -107,7 +107,7 @@ export default function SignupPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `https://pathofyasuke.bytebasetech.com/auth/confirm`,
+          redirectTo: `https://pathofyasuke.bytebasetech.com/auth/callback`,
         },
       })
 
